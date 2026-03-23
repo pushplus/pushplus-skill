@@ -1,4 +1,4 @@
-# PushPlus Notification Skill
+# pushplus Notification Skill
 
 [![ClawHub](https://img.shields.io/badge/ClawHub-pushplus--notification-blue)](https://clawhub.ai/skills/pushplus-notification)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -17,7 +17,7 @@ An [OpenClaw](https://clawhub.ai) agent skill that enables AI agents to send pus
 
 ## Prerequisites
 
-A PushPlus API token (32-character string) — get one free at [pushplus.plus](https://www.pushplus.plus).
+A pushplus API token (32-character string) — get one free at [pushplus.plus](https://www.pushplus.plus).
 
 ## Installation
 
@@ -59,8 +59,8 @@ No MCP server, no npm packages, no setup — just a token and a shell.
 
 ## Related
 
-- [PushPlus Official Site](https://www.pushplus.plus) — Get your API token here
-- [PushPlus MCP Server](https://www.npmjs.com/package/@perk-net/pushplus-mcp-server) — For deeper MCP integration
+- [pushplus Official Site](https://www.pushplus.plus) — Get your API token here
+- [pushplus MCP Server](https://www.npmjs.com/package/@perk-net/pushplus-mcp-server) — For deeper MCP integration
 
 ## License
 

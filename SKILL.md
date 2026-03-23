@@ -1,6 +1,6 @@
 ---
 name: pushplus-notification
-description: Send push notifications via PushPlus HTTP API to WeChat, email, webhook, SMS and more. Use when the user asks to send notifications, push messages, WeChat messages, alerts, reminders, or mentions pushplus. No external dependencies required — only needs a PUSHPLUS_TOKEN and curl/Shell access.
+description: Send push notifications via pushplus HTTP API to WeChat, email, webhook, SMS and more. Use when the user asks to send notifications, push messages, WeChat messages, alerts, reminders, or mentions pushplus. No external dependencies required — only needs a PUSHPLUS_TOKEN and curl/Shell access.
 license: MIT
 metadata:
   author: perk-net
@@ -12,9 +12,9 @@ metadata:
     - messaging
 ---
 
-# PushPlus Notification
+# pushplus Notification
 
-通过 PushPlus HTTP API 直接向微信、邮箱、webhook、短信等渠道推送消息。无需安装任何依赖，只需 Shell 工具 + curl 即可使用。
+通过 pushplus HTTP API 直接向微信、邮箱、webhook、短信等渠道推送消息。无需安装任何依赖，只需 Shell 工具 + curl 即可使用。
 
 ## 前置条件
 
