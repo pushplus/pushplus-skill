@@ -2,9 +2,13 @@
 name: pushplus-notification
 description: Send push notifications via pushplus HTTP API to WeChat, email, webhook, SMS and more. Use when the user asks to send notifications, push messages, WeChat messages, alerts, reminders, or mentions pushplus. No external dependencies required — only needs a PUSHPLUS_TOKEN and curl/Shell access.
 license: MIT
+primaryEnv: PUSHPLUS_TOKEN
+requiredEnvVars:
+  - name: PUSHPLUS_TOKEN
+    description: pushplus API token (32-character string), obtained from https://www.pushplus.plus
 metadata:
   author: perk-net
-  version: 1.0.0
+  version: 1.1.0
   tags:
     - notification
     - pushplus
@@ -23,7 +27,7 @@ metadata:
 获取 token 的方式（按优先级）：
 1. 用户在对话中直接提供
 2. 环境变量 `PUSHPLUS_TOKEN`
-3. 项目根目录 `.env` 文件中的 `PUSHPLUS_TOKEN=xxx`
+3. 从项目根目录 `.env` 文件中**仅提取** `PUSHPLUS_TOKEN` 的值（使用 `grep ^PUSHPLUS_TOKEN= .env` 或等效方式，**禁止读取 `.env` 文件的其他内容**，以避免泄露无关凭证）
 
 如果找不到 token，**必须询问用户**，不要猜测。
 
@@ -162,3 +166,11 @@ curl -s -X POST "https://www.pushplus.plus/batchSend" \
 - Windows 环境下 curl 的单引号需改为双引号，内部双引号用 `\"` 转义
 - 如果 curl 不可用，可用 Python、Node.js 等发送 HTTP POST 请求作为替代
 - token 是敏感信息，不要在输出中明文展示完整 token
+
+## 安全要求
+
+- **发送前确认**：每次发送消息前**必须**向用户展示即将发送的标题和内容摘要，并获得用户明确确认后再执行 curl 命令。禁止在用户不知情的情况下自主发送消息。
+- **凭证保护**：不要在任何输出、日志或代码注释中明文展示完整 token。展示时应使用脱敏格式（如 `a1b2****ef90`）。
+- **最小读取原则**：从 `.env` 文件获取 token 时，仅提取 `PUSHPLUS_TOKEN` 行，禁止读取或输出文件中的其他变量。
+- **敏感内容警示**：如果用户要求发送的消息内容包含密码、密钥、个人身份信息等敏感数据，应**警告用户**消息将通过第三方服务（pushplus.plus）传输，并建议用户确认是否继续。
+- **不要存储 token**：不要将 token 写入任何文件、配置或代码中。仅在内存中用于构造请求。
