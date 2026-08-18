@@ -3,7 +3,7 @@
 [![ClawHub](https://img.shields.io/badge/ClawHub-pushplus--notification-blue)](https://clawhub.ai/skills/pushplus-notification)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-An [OpenClaw](https://clawhub.ai) agent skill that enables AI agents to send push notifications via [PushPlus](https://www.pushplus.plus) HTTP API (消息接口 V1.16) to WeChat, ClawBot, email, webhook, SMS, App, and more — with progressive disclosure of Open API (V1.15) for result lookup and account management.
+An [OpenClaw](https://clawhub.ai) agent skill that enables AI agents to send push notifications via [PushPlus](https://www.pushplus.plus) HTTP API (消息接口 V1.16) to WeChat, ClawBot, email, webhook, SMS, App, and more — with progressive disclosure of Open API (V1.16) for result lookup, account management, and friend/topic-user blacklists.
 
 **Zero dependencies** — works with any agent that has Shell/curl access. No MCP server or extra packages required.
 
@@ -11,10 +11,10 @@ An [OpenClaw](https://clawhub.ai) agent skill that enables AI agents to send pus
 
 - **Direct HTTP API** — No extra dependencies, just curl
 - **9 channels**: WeChat, App, extension, webhook, ClawBot, enterprise WeChat, email, SMS, voice
-- **9 templates**: HTML, txt, JSON, Markdown, cloudMonitor, Jenkins, route, pay, form
+- **11 templates**: HTML, txt, JSON, Markdown, cloudMonitor, Jenkins, route, pay, form, doc, excel（后三者需 `pushId`）
 - **Multi-channel batch**: Send to multiple channels in one `/batchSend` request
 - **Async-aware**: Treats `code=200` as request accepted; returns message shortCode for result lookup
-- **Open API reference**: AccessKey auth, send-result query, topics, friends, channels, ClawBot, settings, images — see `reference.md`
+- **Open API reference**: AccessKey auth, send-result query, topics, friends, blacklists, channels, ClawBot, settings, images — see `reference.md`
 - **Cross-platform**: Works on macOS, Linux, and Windows
 
 ## Prerequisites
@@ -65,7 +65,7 @@ No MCP server, no npm packages, no setup — just a token and a shell.
 - Skill 主指令（发送）：`SKILL.md`
 - 开放接口（渐进披露）：`reference.md`
 - [消息接口文档 V1.16](https://www.pushplus.plus/doc/guide/api.html)
-- [开放接口文档 V1.15](https://www.pushplus.plus/doc/guide/openApi.html)
+- [开放接口文档 V1.16](https://www.pushplus.plus/doc/guide/openApi.html)
 
 ## Related
 

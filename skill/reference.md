@@ -1,9 +1,9 @@
 # pushplus 开放接口参考
 
-文档版本：**V1.15**（[官方文档](https://www.pushplus.plus/doc/guide/openApi.html)）  
+文档版本：**V1.16**（[官方文档](https://www.pushplus.plus/doc/guide/openApi.html)）  
 在线调试：https://api.pushplus.plus/doc-6905395
 
-本文件供智能体在需要查询发送结果、管理群组/好友/渠道/ClawBot、配置设置等场景时按需阅读。日常发消息请优先使用 [SKILL.md](SKILL.md) 中的 `/send` 与 `/batchSend`（用户 token，无需 AccessKey）。
+本文件供智能体在需要查询发送结果、管理群组/好友/黑名单/渠道/ClawBot、配置设置等场景时按需阅读。日常发消息请优先使用 [SKILL.md](SKILL.md) 中的 `/send` 与 `/batchSend`（用户 token，无需 AccessKey）。
 
 ## 何时使用开放接口
 
@@ -12,7 +12,7 @@
 | 发通知 / 告警 | 否 | 用 `/send` 或 `/batchSend` + `PUSHPLUS_TOKEN` |
 | 查发送是否成功 | 是 | `GET .../message/sendMessageResult` |
 | 列消息、删消息 | 是 | 消息接口 |
-| 管群组 / 好友 / webhook | 是 | 对应模块 |
+| 管群组 / 好友 / 黑名单 / webhook | 是 | 对应模块 |
 | 绑定 ClawBot | 是 | ClawBot 接口 |
 | 上传图片 | 是 | 图片服务 |
 
@@ -142,8 +142,35 @@ curl -s "https://www.pushplus.plus/api/open/message/sendMessageResult?shortCode=
 | 能力 | 方法 | 路径 | 关键参数 |
 |------|------|------|----------|
 | 订阅人列表 | POST | `/subscriberList` | `params.topicId` 必填 |
-| 删除用户 | POST | `/deleteTopicUser` | query: `topicRelationId`（列表中的 `id`） |
+| 删除用户 | POST | `/deleteTopicUser` | query: `topicRelationId`（订阅人列表中的 `id`） |
 | 修改备注 | POST | `/editRemark` | `id`, `remark`（≤20 字） |
+| 加入黑名单 | POST | `/addBlacklist` | query: `topicRelationId`（订阅人列表中的 `id`） |
+| 黑名单列表 | POST | `/blacklistList` | `params.topicId` 必填；分页 |
+| 解除黑名单 | POST | `/removeBlacklist` | query: `id`（**黑名单列表**中的 `id`，不是订阅人 `id`） |
+
+拉黑说明：
+- 加入后将该用户**移出群组**，且对方无法再加入该群组
+- **积分群组不支持**黑名单
+- 不能将自己加入黑名单
+- 解除后**不会自动恢复订阅**，对方可重新加入
+
+```bash
+# 拉黑（topicRelationId = 订阅人列表 id）
+curl -s -X POST "https://www.pushplus.plus/api/open/topicUser/addBlacklist?topicRelationId=1" \
+  -H "access-key: ACCESS_KEY"
+
+# 黑名单列表
+curl -s -X POST "https://www.pushplus.plus/api/open/topicUser/blacklistList" \
+  -H "Content-Type: application/json" \
+  -H "access-key: ACCESS_KEY" \
+  -d '{"current":1,"pageSize":20,"params":{"topicId":1}}'
+
+# 解除（id = 黑名单列表 id）
+curl -s -X POST "https://www.pushplus.plus/api/open/topicUser/removeBlacklist?id=1" \
+  -H "access-key: ACCESS_KEY"
+```
+
+黑名单列表项：`id`（解除时用）、`userId`、`nickName`、`openId`、`headImgUrl`、`createTime`（拉黑时间）。
 
 ---
 
@@ -222,11 +249,37 @@ curl -s "https://www.pushplus.plus/api/open/message/sendMessageResult?shortCode=
 | 能力 | 方法 | 路径 | 关键参数 |
 |------|------|------|----------|
 | 个人二维码 | GET | `/getQrCode` | 可选 `appId`, `content`, `second`, `scanCount` |
-| 好友列表 | POST | `/list` | 分页；项含 `token`（发好友消息用） |
-| 删除好友 | GET | `/deleteFriend` | `friendId` |
-| 修改备注 | POST | `/editRemark` | `id`, `remark` |
+| 好友列表 | POST | `/list` | 分页；项含 `token`（发好友消息用）、`friendId`（拉黑/删除用） |
+| 删除好友 | GET | `/deleteFriend` | query: `friendId` |
+| 修改备注 | POST | `/editRemark` | `id`（列表 `id`）, `remark` |
+| 加入黑名单 | POST | `/addBlacklist` | query: `friendId`（好友列表中的 **`friendId`**，不是 `id`） |
+| 黑名单列表 | POST | `/blacklistList` | 分页 |
+| 解除黑名单 | POST | `/removeBlacklist` | query: `id`（**黑名单列表**中的 `id`，不是 `friendId`） |
 
 发送好友消息：`/send` 的 `to` 填好友列表中的 `token`，勿与 `topic` 同填。
+
+拉黑说明：
+- 加入后将**解除双方好友关系**，对方无法再添加你
+- 不能将自己加入黑名单；**仅可将已有好友**加入黑名单
+- 解除后**不会自动恢复好友关系**，需重新扫码添加
+
+```bash
+# 拉黑（friendId = 好友列表 friendId）
+curl -s -X POST "https://www.pushplus.plus/api/open/friend/addBlacklist?friendId=1" \
+  -H "access-key: ACCESS_KEY"
+
+# 黑名单列表
+curl -s -X POST "https://www.pushplus.plus/api/open/friend/blacklistList" \
+  -H "Content-Type: application/json" \
+  -H "access-key: ACCESS_KEY" \
+  -d '{"current":1,"pageSize":20}'
+
+# 解除（id = 黑名单列表 id）
+curl -s -X POST "https://www.pushplus.plus/api/open/friend/removeBlacklist?id=1" \
+  -H "access-key: ACCESS_KEY"
+```
+
+黑名单列表项：`id`（解除时用）、`friendId`、`nickName`、`headImgUrl`、`createTime`（拉黑时间）。
 
 ---
 
@@ -265,7 +318,7 @@ curl -s "https://www.pushplus.plus/api/open/message/sendMessageResult?shortCode=
 ## Agent 调用要点
 
 1. **先发消息用 token，再查结果用 AccessKey**：`/send` 返回 `shortCode` → 开放接口查 `status`。
-2. **破坏性操作**（删消息、删群组、删好友、解绑 ClawBot、关发送）必须先向用户确认。
+2. **破坏性操作**（删消息、删群组、删好友、拉黑好友/订阅人、解绑 ClawBot、关发送）必须先向用户确认。拉黑会解除关系且对方无法再加入/添加，解除黑名单也不会自动恢复。
 3. **分页**：多数列表 `pageSize` 最大 50。
 4. **脱敏**：输出中遮盖 token、secretKey、accessKey、webhookUrl、邮箱密码等。
 5. 完整字段与示例见 [开放接口文档](https://www.pushplus.plus/doc/guide/openApi.html)；发送参数见 [消息接口文档](https://www.pushplus.plus/doc/guide/api.html)。
