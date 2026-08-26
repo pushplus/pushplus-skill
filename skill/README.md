@@ -3,18 +3,18 @@
 [![ClawHub](https://img.shields.io/badge/ClawHub-pushplus--notification-blue)](https://clawhub.ai/skills/pushplus-notification)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-An [OpenClaw](https://clawhub.ai) agent skill that enables AI agents to send push notifications via [PushPlus](https://www.pushplus.plus) HTTP API (消息接口 V1.16) to WeChat, ClawBot, email, webhook, SMS, App, and more — with progressive disclosure of Open API (V1.16) for result lookup, account management, and friend/topic-user blacklists.
+An [OpenClaw](https://clawhub.ai) agent skill that enables AI agents to send push notifications via [PushPlus](https://www.pushplus.plus) HTTP API (消息接口 V1.17) to WeChat, ClawBot, QQ bot, email, webhook, SMS, App, and more — with progressive disclosure of Open API (V1.17) for result lookup, account management, friend/topic-user blacklists, and QQ bot binding/group configs.
 
 **Zero dependencies** — works with any agent that has Shell/curl access. No MCP server or extra packages required.
 
 ## Features
 
 - **Direct HTTP API** — No extra dependencies, just curl
-- **9 channels**: WeChat, App, extension, webhook, ClawBot, enterprise WeChat, email, SMS, voice
+- **10 channels**: WeChat, App, extension, webhook, ClawBot, QQ bot, enterprise WeChat, email, SMS, voice
 - **11 templates**: HTML, txt, JSON, Markdown, cloudMonitor, Jenkins, route, pay, form, doc, excel（后三者需 `pushId`）
 - **Multi-channel batch**: Send to multiple channels in one `/batchSend` request
 - **Async-aware**: Treats `code=200` as request accepted; returns message shortCode for result lookup
-- **Open API reference**: AccessKey auth, send-result query, topics, friends, blacklists, channels, ClawBot, settings, images — see `reference.md`
+- **Open API reference**: AccessKey auth, send-result query, topics, friends, blacklists, channels, ClawBot, QQ bot, settings, images — see `reference.md`
 - **Cross-platform**: Works on macOS, Linux, and Windows
 
 ## Prerequisites
@@ -42,6 +42,7 @@ Once installed, the AI agent will automatically use this skill when you ask it t
 
 - "发送一条微信消息通知我任务完成了"
 - "用 ClawBot 渠道提醒我"
+- "用 QQ 机器人把构建结果发到我的 QQ 群"
 - "Send me a WeChat notification when the build is done"
 - "把这个错误日志推送到我的邮箱"
 - "用 pushplus 同时发微信和邮件通知"
@@ -64,8 +65,8 @@ No MCP server, no npm packages, no setup — just a token and a shell.
 
 - Skill 主指令（发送）：`SKILL.md`
 - 开放接口（渐进披露）：`reference.md`
-- [消息接口文档 V1.16](https://www.pushplus.plus/doc/guide/api.html)
-- [开放接口文档 V1.16](https://www.pushplus.plus/doc/guide/openApi.html)
+- [消息接口文档 V1.17](https://www.pushplus.plus/doc/guide/api.html)
+- [开放接口文档 V1.17](https://www.pushplus.plus/doc/guide/openApi.html)
 
 ## Related
 

@@ -1,9 +1,9 @@
 # pushplus 开放接口参考
 
-文档版本：**V1.16**（[官方文档](https://www.pushplus.plus/doc/guide/openApi.html)）  
+文档版本：**V1.17**（[官方文档](https://www.pushplus.plus/doc/guide/openApi.html)）  
 在线调试：https://api.pushplus.plus/doc-6905395
 
-本文件供智能体在需要查询发送结果、管理群组/好友/黑名单/渠道/ClawBot、配置设置等场景时按需阅读。日常发消息请优先使用 [SKILL.md](SKILL.md) 中的 `/send` 与 `/batchSend`（用户 token，无需 AccessKey）。
+本文件供智能体在需要查询发送结果、管理群组/好友/黑名单/渠道/ClawBot/QQ 机器人、配置设置等场景时按需阅读。日常发消息请优先使用 [SKILL.md](SKILL.md) 中的 `/send` 与 `/batchSend`（用户 token，无需 AccessKey）。
 
 ## 何时使用开放接口
 
@@ -14,6 +14,7 @@
 | 列消息、删消息 | 是 | 消息接口 |
 | 管群组 / 好友 / 黑名单 / webhook | 是 | 对应模块 |
 | 绑定 ClawBot | 是 | ClawBot 接口 |
+| 绑定 QQ 机器人 / 管群配置 | 是 | QQ 机器人接口 |
 | 上传图片 | 是 | 图片服务 |
 
 ## 认证（AccessKey）
@@ -93,7 +94,7 @@ curl -s "https://www.pushplus.plus/api/open/message/sendMessageResult?shortCode=
 | 获取用户 token | GET | `/token` | data 为用户 token 字符串 |
 | 个人资料 | GET | `/myInfo` | 含积分、实名、会员等 |
 | 解封剩余时间 | GET | `/userLimitTime` | `sendLimit`: 1 无限制 / 2 短期 / 3 永久 |
-| 当日请求次数 | GET | `/sendCount` | 各渠道当日调用次数 |
+| 当日请求次数 | GET | `/sendCount` | 各渠道当日调用次数，含 `qqBotSendCount` |
 
 `myInfo` 要点：`verifyStatus`（0 未实名 / 1 已实名）、`points`、`vipInfo.isVip` / `vipInfo.lastDay`、`token`、`phoneNumber`、`email`。
 
@@ -202,7 +203,7 @@ curl -s -X POST "https://www.pushplus.plus/api/open/topicUser/removeBlacklist?id
 | 邮箱渠道列表 | POST | `/api/open/mail/list` |
 | 邮箱详情 | GET | `/api/open/mail/detail?mailId=` |
 
-企微 `cpCode`、邮箱 `mailCode` 可作为 `/send` 的 `option`。
+企微 `cpCode`、邮箱 `mailCode` 可作为 `/send` 的 `option`。QQ 机器人的群配置（`qqCode`）见「八、QQ 机器人接口」。
 
 ---
 
@@ -222,7 +223,53 @@ curl -s -X POST "https://www.pushplus.plus/api/open/topicUser/removeBlacklist?id
 
 ---
 
-## 八、功能设置接口
+## 八、QQ 机器人接口
+
+基址：`https://www.pushplus.plus/api/open/qqBot`
+
+| 能力 | 方法 | 路径 | 关键参数 |
+|------|------|------|----------|
+| 获取绑定链接 | GET | `/getBindLink` | query: `refresh`（可选，true 使旧绑定码失效并重新生成） |
+| 查询绑定状态 | GET | `/botInfo` | 无参数 |
+| 解绑 | GET | `/unbind` | 无参数（不可逆，需确认） |
+| 已加入的 QQ 群列表 | GET | `/groupList` | 无参数 |
+| 群配置列表 | POST | `/list` | 分页 `current`, `pageSize` |
+| 新增群配置 | POST | `/add` | `qqName`, `qqCode`, `qqGroupId` 必填 |
+| 修改群配置 | POST | `/edit` | `id`, `qqName`, `qqGroupId`（`qqCode` 不可改） |
+| 删除群配置 | DELETE | `/delete` | query: `id` |
+
+`getBindLink` 返回：`url`（带参分享链接，用于生成二维码；已绑定用户可能为空）、`bindCode`（绑定码，已是好友时需私聊发给机器人；认领 QQ 群也用此码）、`expireSeconds`（默认 300）、`botAppId`、`botName`、`botAvatar`。
+
+`botInfo` 返回：`isBind`（0 未绑定 / 1 已绑定）、`receiveStatus`（1 可接收 / 0 用户已关闭单聊接收）、`createTime`、`botInfo{botId, username, avatar, appId, shareUrl}`（`shareUrl` 可用于拉机器人进群）。
+
+`groupList` 项：`id`（新增配置时作为 `qqGroupId`）、`groupOpenId`、`groupRemark`、`status`（1 在群 / 2 群消息接收关闭）、`groupName`、`groupFingerMemo`、`groupClassText`、`groupTags`、`groupMemberNum`、`createTime`。
+
+群配置列表项：`id`、`qqName`、`qqCode`（**发送消息时作为 `option`**）、`sendType`（2 发到 QQ 群）、`qqGroupId`、`groupRemark`、`groupOpenId`、`groupName`、`updateTime`。
+
+配置约束：仅用于发到 QQ 群（发给自己无需配置）；普通用户最多 5 个，会员最多 30 个；同一 QQ 群不可重复创建；`qqCode` 创建后不可修改（最多 32 字符，仅字母、数字、下划线、中划线）；`qqName` 最多 64 字符；目标群须允许机器人主动消息。
+
+```bash
+# 1. 取绑定链接，把 url 生成二维码给用户扫，或让用户私聊发送 bindCode
+curl -s "https://www.pushplus.plus/api/open/qqBot/getBindLink" \
+  -H "access-key: ACCESS_KEY"
+
+# 2. 轮询绑定状态，isBind=1 即可用 channel=qq 发消息
+curl -s "https://www.pushplus.plus/api/open/qqBot/botInfo" -H "access-key: ACCESS_KEY"
+
+# 3. 查已加入的群，取 id 作为 qqGroupId 建配置
+curl -s "https://www.pushplus.plus/api/open/qqBot/groupList" -H "access-key: ACCESS_KEY"
+
+curl -s -X POST "https://www.pushplus.plus/api/open/qqBot/add" \
+  -H "Content-Type: application/json" \
+  -H "access-key: ACCESS_KEY" \
+  -d '{"qqName":"交流群推送","qqCode":"qqgroup","qqGroupId":1}'
+```
+
+绑定流程：`/getBindLink` → 用户扫码加机器人好友（已是好友则私聊发送 `bindCode`）→ 轮询 `/botInfo` 直到 `isBind=1` → `/send` 且 `channel=qq`（不填 `option` 发给自己）。发到群还需：把机器人拉进群并允许主动消息 → `/groupList` 取群 `id` → `/add` 建配置 → 发送时 `option` 填 `qqCode`。
+
+---
+
+## 九、功能设置接口
 
 基址：`https://www.pushplus.plus/api/open/setting`
 
@@ -238,11 +285,11 @@ curl -s -X POST "https://www.pushplus.plus/api/open/topicUser/removeBlacklist?id
 | 打开方式 | GET | `/changeOpenMessageType` | `openMessageType`：0 H5 / 1 小程序 |
 | 插件转发 | GET | `/extension` | `forward`：0 否 / 1 是（微信消息同步插件/桌面端） |
 
-默认渠道 `channel`：`wechat` / `cp` / `webhook` / `mail` / `sms` / `voice` / `extension`。
+默认渠道 `channel`：`wechat` / `cp` / `webhook` / `mail` / `sms` / `voice` / `extension` / `qq`。
 
 ---
 
-## 九、好友功能接口
+## 十、好友功能接口
 
 基址：`https://www.pushplus.plus/api/open/friend`
 
@@ -283,7 +330,7 @@ curl -s -X POST "https://www.pushplus.plus/api/open/friend/removeBlacklist?id=1"
 
 ---
 
-## 十、预处理信息接口（需会员）
+## 十一、预处理信息接口（需会员）
 
 基址：`https://www.pushplus.plus/api/open/pre`
 
@@ -300,7 +347,7 @@ curl -s -X POST "https://www.pushplus.plus/api/open/friend/removeBlacklist?id=1"
 
 ---
 
-## 十一、图片服务接口
+## 十二、图片服务接口
 
 图片约 30 天有效；可主动删除。
 
@@ -318,7 +365,7 @@ curl -s -X POST "https://www.pushplus.plus/api/open/friend/removeBlacklist?id=1"
 ## Agent 调用要点
 
 1. **先发消息用 token，再查结果用 AccessKey**：`/send` 返回 `shortCode` → 开放接口查 `status`。
-2. **破坏性操作**（删消息、删群组、删好友、拉黑好友/订阅人、解绑 ClawBot、关发送）必须先向用户确认。拉黑会解除关系且对方无法再加入/添加，解除黑名单也不会自动恢复。
+2. **破坏性操作**（删消息、删群组、删好友、删 QQ 群配置、拉黑好友/订阅人、解绑 ClawBot / QQ 机器人、关发送）必须先向用户确认。拉黑会解除关系且对方无法再加入/添加，解除黑名单也不会自动恢复。
 3. **分页**：多数列表 `pageSize` 最大 50。
 4. **脱敏**：输出中遮盖 token、secretKey、accessKey、webhookUrl、邮箱密码等。
 5. 完整字段与示例见 [开放接口文档](https://www.pushplus.plus/doc/guide/openApi.html)；发送参数见 [消息接口文档](https://www.pushplus.plus/doc/guide/api.html)。

@@ -1,6 +1,6 @@
 ---
 name: pushplus-notification
-description: Send push notifications via pushplus HTTP API to WeChat, ClawBot, email, webhook, SMS, App and more; also manage messages, topics, friends, friend/topic-user blacklists, channels and ClawBot via Open API when needed. Use when the user asks to send notifications, push messages, WeChat messages, alerts, reminders, query send results, manage blacklists, or mentions pushplus. No external dependencies — only needs a PUSHPLUS_TOKEN (and AccessKey credentials for Open API) plus curl/Shell access.
+description: Send push notifications via pushplus HTTP API to WeChat, ClawBot, QQ bot (direct message or QQ group), email, webhook, SMS, App and more; also manage messages, topics, friends, friend/topic-user blacklists, channels, ClawBot and QQ bot binding/groups via Open API when needed. Use when the user asks to send notifications, push messages, WeChat messages, QQ messages, alerts, reminders, query send results, manage blacklists, or mentions pushplus. No external dependencies — only needs a PUSHPLUS_TOKEN (and AccessKey credentials for Open API) plus curl/Shell access.
 license: MIT
 primaryEnv: PUSHPLUS_TOKEN
 requiredEnvVars:
@@ -13,22 +13,23 @@ optionalEnvVars:
     description: Cached Open API access-key (expires ~7200s)
 metadata:
   author: perk-net
-  version: 1.3.2
-  apiVersion: "1.16"
-  openApiVersion: "1.16"
+  version: 1.3.3
+  apiVersion: "1.17"
+  openApiVersion: "1.17"
   tags:
     - notification
     - pushplus
     - wechat
     - clawbot
+    - qqbot
     - messaging
 ---
 
 # pushplus Notification
 
-通过 pushplus HTTP API 向微信、ClawBot、邮箱、webhook、短信、App 等渠道推送消息。无需安装依赖，Shell + curl 即可。
+通过 pushplus HTTP API 向微信、ClawBot、QQ 机器人、邮箱、webhook、短信、App 等渠道推送消息。无需安装依赖，Shell + curl 即可。
 
-依据：[消息接口文档 V1.16](https://www.pushplus.plus/doc/guide/api.html)。开放能力（查结果 / 群组 / 好友 / 黑名单 / 渠道等）见 [reference.md](reference.md)。
+依据：[消息接口文档 V1.17](https://www.pushplus.plus/doc/guide/api.html)。开放能力（查结果 / 群组 / 好友 / 黑名单 / 渠道 / QQ 机器人绑定等）见 [reference.md](reference.md)。
 
 ## 前置条件
 
@@ -75,13 +76,13 @@ curl -s -X POST "https://www.pushplus.plus/send" \
 | `option` | 否 | 无 | 渠道配置参数（原 webhook 参数） |
 | `callbackUrl` | 否 | 无 | 发送结果回调地址 |
 | `timestamp` | 否 | 无 | 毫秒时间戳，如 `1632993318000`；服务器时间戳大于此值则消息不会发送 |
-| `to` | 否 | 无 | 好友令牌（微信公众号）或企业微信用户 id；多人用逗号隔开；实名最多 10 人，会员 100 人 |
+| `to` | 否 | 无 | 好友令牌（微信公众号 / QQ 机器人）或企业微信用户 id；多人用逗号隔开；实名最多 10 人，会员 100 人 |
 | `pre` | 否 | 无 | 预处理编码；仅供会员使用 |
 | `pushId` | 否 | 无 | 推送表单/文档/表格。`template=form` 时必填，传表单编码（formCode）；`template=doc` 时必填，传文档编码（docCode）；`template=excel` 时必填，传表格编码（docCode） |
 
-`option` 说明：原 webhook 参数。`cp`、`webhook`、`mail` 渠道需填写个人中心渠道设置中已配置的**渠道编码**（非完整 URL）。邮件渠道 `option` 可选，不填则用官网邮件发送。
+`option` 说明：原 webhook 参数。`cp`、`webhook`、`mail`、`qq` 渠道需填写个人中心渠道设置中已配置的**渠道编码**（非完整 URL）。邮件渠道 `option` 可选，不填则用官网邮件发送。`qq` 渠道不填 `option` 时发给自己，填写配置编码则发送到对应 QQ 群。
 
-`topic` 与 `to` 勿同时填写；群组优先于好友。`to` 支持微信公众号、邮件、企业微信渠道。
+`topic` 与 `to` 勿同时填写；群组优先于好友。`to` 支持微信公众号、邮件、企业微信、QQ 机器人渠道。QQ 机器人发送到群（带 `option`）时不可同时填写 `topic` 或 `to`。
 
 ### 发送渠道（channel）
 
@@ -92,6 +93,7 @@ curl -s -X POST "https://www.pushplus.plus/send" \
 | `extension` | 免费 | 浏览器扩展插件 / 桌面应用程序 |
 | `webhook` | 免费 | 第三方 webhook（企微/钉钉/飞书/bark/Gotify/轻联/集简云/server酱/IFTTT/WxPusher 等）；需 `option` |
 | `clawbot` | 免费 | 微信 ClawBot |
+| `qq` | 免费 | QQ 机器人；不填 `option` 发给自己，填配置编码发到对应 QQ 群；需先绑定 |
 | `cp` | 免费 | 企业微信应用；需 `option` |
 | `mail` | 免费 | 邮箱；`option` 可选 |
 | `sms` | 收费 | 短信；成功 1 条扣 10 积分（0.1 元）；接收方需绑定手机 |
@@ -164,12 +166,12 @@ curl -s -X POST "https://www.pushplus.plus/send" \
 
 1. 获取 `PUSHPLUS_TOKEN`
 2. 选择 `template` 与 `channel`（默认 `html` + `wechat`）
-3. `webhook` / `cp` 确认已配置渠道编码并填入 `option`；`mail` 的 `option` 可选
+3. `webhook` / `cp` 确认已配置渠道编码并填入 `option`；`mail` 的 `option` 可选；`qq` 发给自己不填 `option`，发到群则填群配置编码
 4. `template` 为 `form` / `doc` / `excel` 时确认已有对应 `pushId`（须先在官网创建）
 5. **向用户展示标题与内容摘要，获得确认后再发送**
 6. POST 请求；检查 `code` 是否为 200
 7. 成功则反馈流水号（请求已受理）；失败根据 `msg` 说明
-8. 需确认送达 / 管理群组好友黑名单 / 绑定 ClawBot → 阅读 [reference.md](reference.md)
+8. 需确认送达 / 管理群组好友黑名单 / 绑定 ClawBot 或 QQ 机器人 → 阅读 [reference.md](reference.md)
 
 ## 模板选择策略
 
@@ -214,6 +216,24 @@ curl -s -X POST "https://www.pushplus.plus/send" \
   -H "Content-Type: application/json" \
   -d '{"token":"YOUR_TOKEN","title":"提醒","content":"任务已完成","template":"txt","channel":"clawbot"}'
 ```
+
+### QQ 机器人
+
+需先在个人中心 → 渠道配置 → QQ 机器人完成绑定（也可用开放接口，见 [reference.md](reference.md)）。
+
+```bash
+# 发给自己（不填 option）
+curl -s -X POST "https://www.pushplus.plus/send" \
+  -H "Content-Type: application/json" \
+  -d '{"token":"YOUR_TOKEN","title":"提醒","content":"任务已完成","template":"txt","channel":"qq"}'
+
+# 发到 QQ 群（option 填已配置的群配置编码 qqCode）
+curl -s -X POST "https://www.pushplus.plus/send" \
+  -H "Content-Type: application/json" \
+  -d '{"token":"YOUR_TOKEN","title":"提醒","content":"# 构建完成\n- 耗时 12s","template":"markdown","channel":"qq","option":"qqgroup"}'
+```
+
+建议用 `txt` 或 `markdown`：`txt` 完整展示正文，`markdown` 走 QQ 原生 Markdown（不支持代码块和 HTML）；其他模板仅摘要展示，详情需点开链接。正文上限约 2000 字。
 
 ### Webhook / 企业微信应用
 
@@ -298,6 +318,7 @@ curl -s -X POST "https://www.pushplus.plus/batchSend" \
 - GET 中文 content 需 UrlEncode；大段内容用 POST（GET 受 URL 长度限制）
 - `template=json` 放在 body 时会解析 `content` 中的 JSON；若 `template=json` 放在 URL 上，则**整个 body 视为 content**（适合第三方 webhook 无法改 body 的场景）
 - `topic` 与 `to` 不要同时填写
+- `qq` 渠道发到群（带 `option`）时不可同时填 `topic` / `to`；`markdown` 不支持代码块与 HTML
 - `form` / `doc` / `excel` 未传 `pushId` 会校验失败
 - 收费渠道（`sms` / `voice`）发送前告知会消耗积分
 - token 脱敏展示（如 `a1b2****ef90`）
@@ -309,7 +330,7 @@ curl -s -X POST "https://www.pushplus.plus/batchSend" \
 - **最小读取**：从 `.env` 只提取 `PUSHPLUS_*` 相关行。
 - **敏感内容警示**：含密码、密钥、PII 时警告将经第三方传输。
 - **不要持久化凭证**：仅在内存中构造请求。
-- **破坏性开放接口**：删消息/群组/好友、拉黑、解绑等须先确认（见 reference.md）。
+- **破坏性开放接口**：删消息/群组/好友/QQ 群配置、拉黑、解绑 ClawBot 或 QQ 机器人等须先确认（见 reference.md）。
 
 ## 附加资源
 
